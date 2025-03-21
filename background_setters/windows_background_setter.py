@@ -14,20 +14,16 @@ SPIF_SENDWININICHANGE = 0x02  # Notify change to system
 def set_wallpaper(image_url: str):
     config = get_config()
 
-    response = requests.get(image_url)
-    if response.status_code != 200:
-        raise ConnectionError(f"Failed to download image: {image_url}")
+    with requests.get(image_url, stream=True) as response:
+        response.raise_for_status()
+        with open(config.local_image, "wb") as file:
+            for chunk in response.iter_content(chunk_size=8192):
+                file.write(chunk)
 
-    with open(file=config.local_image, mode="wb") as file:
-        file.write(response.content)
-
-    wallpaperp_full_path = f"{os.getcwd()}/{config.local_image}"
-
-    # Call Windows API to change wallpaper
     ctypes.windll.user32.SystemParametersInfoW(
         SPI_SETDESKWALLPAPER,
         0,
-        wallpaperp_full_path,
+        str(os.path.abspath(config.local_image)),
         SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE,
     )
 

@@ -12,14 +12,10 @@ def extract_images(html: str) -> List[str]:
 
     config = get_config()
 
-    # Filter premium images
-    filtered_image_urls = filter(lambda url: "premium_photo" in url, image_urls)
-
-    # Do not reuse previous image
-    # TODO: Cache more used images
-    if config.last_image is not None:
-        filtered_image_urls = filter(
-            lambda url: url not in config.last_image, filtered_image_urls
-        )
-
-    return list(filtered_image_urls)
+    # Filter premium images and do not reuse previous image
+    return [
+        url
+        for url in image_urls
+        if "premium_photo" in url
+        and (config.last_image is None or url != config.last_image)
+    ]
